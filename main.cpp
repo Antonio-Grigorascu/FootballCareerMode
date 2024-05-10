@@ -1,9 +1,12 @@
-#include<iostream>
+#include <iostream>
+#include <random>
 #include <vector>
 #include <iomanip>
 #include <random>
 #include <algorithm>
 #include <tuple>
+#include <memory>
+#include <set>
 
 
 class Team{
@@ -38,19 +41,22 @@ class Player{
     int overallRating;
     int pace, shooting, passing, dribbling, defending, physical;
     Team team;
+    int goals, assists;
 public:
     Player(std::string firstName_, std::string lastName_, std::string position_, const Team& team_) : firstName(firstName_),
                                                                                    lastName(lastName_),
                                                                                    age(18),
                                                                                    position(position_),
-                                                                                   overallRating(2),
-                                                                                   pace(1),
-                                                                                   shooting(1),
-                                                                                   passing(1),
-                                                                                   dribbling(1),
-                                                                                   defending(1),
-                                                                                   physical(1),
-                                                                                   team(team_)
+                                                                                   overallRating(10),
+                                                                                   pace(10),
+                                                                                   shooting(10),
+                                                                                   passing(10),
+                                                                                   dribbling(10),
+                                                                                   defending(10),
+                                                                                   physical(10),
+                                                                                   team(team_),
+                                                                                   goals(0),
+                                                                                   assists(0)
     {std::cout<<"Player has been created"<<std::endl;}
 
     Player(const Player& other): firstName(other.firstName),
@@ -64,7 +70,9 @@ public:
                                  dribbling(other.dribbling),
                                  defending(other.defending),
                                  physical(other.physical),
-                                 team(other.team){
+                                 team(other.team),
+                                 goals(other.goals),
+                                 assists(other.assists){
         std::cout<<"Your player has bees copied!"<<std::endl;
     }
     ~Player() { std::cout<<"The player has retired!"<<std::endl;}
@@ -97,6 +105,42 @@ public:
         return physical;
     }
 
+    int getOverallRating() const{
+        return overallRating;
+    }
+
+    int getGoals() const{
+        return goals;
+    }
+
+    int getAssists() const{
+        return assists;
+    }
+
+    void setGoals(int goals_){
+        Player::goals = goals_;
+    }
+
+    void setAssists(int assists_){
+        Player::assists = assists_;
+    }
+
+    void setTeam(const Team &team_){
+        Player::team = team_;
+    }
+
+    void setPace(int pace);
+
+    void setShooting(int shooting);
+
+    void setPassing(int passing);
+
+    void setDribbling(int dribbling);
+
+    void setDefending(int defending);
+
+    void setPhysical(int physical);
+
 
     friend std::ostream& operator<<(std::ostream& os, const Player& player);
 };
@@ -114,9 +158,34 @@ std::ostream& operator<<(std::ostream& os, const Player& player) {
     os << std::setw(12) << std::left << "Dribbling:" << player.dribbling << std::endl;
     os << std::setw(12) << std::left << "Defending:" << player.defending << std::endl;
     os << std::setw(12) << std::left << "Physical:" << player.physical << std::endl;
+    os << std::setw(12) << std::left << "Goals:" << player.goals << std::endl;
+    os << std::setw(12) << std::left << "Assists:" << player.assists << std::endl;
     return os;
 }
 
+void Player::setPace(int pace_) {
+    Player::pace = pace_;
+}
+
+void Player::setShooting(int shooting_) {
+    Player::shooting = shooting_;
+}
+
+void Player::setPassing(int passing_) {
+    Player::passing = passing_;
+}
+
+void Player::setDribbling(int dribbling_) {
+    Player::dribbling = dribbling_;
+}
+
+void Player::setDefending(int defending_) {
+    Player::defending = defending_;
+}
+
+void Player::setPhysical(int physical_) {
+    Player::physical = physical_;
+}
 
 
 class Championship{
@@ -219,7 +288,7 @@ public:
     std::vector<int> generateForm() override {
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(-5, 5);
+        std::uniform_int_distribution<> dis(-7, 7);
 
         std::vector<int> randomNumbers;
         randomNumbers.reserve(getTeams().size());
@@ -295,6 +364,222 @@ public:
     ~PlayOut2Liga2() { std::cout << ""; }
 };
 
+class Card{
+    int value;
+    std::string suit;
+public:
+    Card(int value_, const std::string &suit_) : value(value_), suit(suit_) {}
+
+    int getValue() const {
+        return value;
+    }
+
+    std::string changeValue() const {
+        if(value == 11){
+            return ("A");
+        }
+        if(value == 12){
+            return ("J");
+        }
+        if(value == 13){
+            return ("Q");
+        }
+        if(value == 14){
+            return ("K");
+        }
+        return std::to_string(value);
+    }
+
+    std::tuple<int,int> events(Player& player, int weight){
+        int goals, assists = 0;
+        if(value == 9){
+            std::cout<<"Your player scored "<<weight*5<<" goal(s)!"<<std::endl;
+            player.setGoals(player.getGoals() + weight*5);
+            player.setShooting(player.getShooting() + weight*2);
+            goals += weight*5;
+        }
+        if(value == 10){
+            std::cout<<"Your player assisted "<<weight*5<<" goal(s)!"<<std::endl;
+            player.setAssists(player.getAssists() + weight*5);
+            player.setPassing(player.getPassing() + weight*2);
+            assists += weight*5;
+        }
+        if(value == 11){
+            std::cout<<"Your player made "<<weight*5<<" runs in the final third, which resulted in him getting an extra " << weight <<" assist(s)!"<<std::endl;
+            player.setAssists(player.getAssists() + weight);
+            player.setPace(player.getPace() + weight*2);
+            assists += weight;
+        }
+        if(value == 12){
+            std::cout<<"Your player made "<<weight*5<<" successful dribbles, which resulted in him scoring an extra " << weight << " goal(s)!"<<std::endl;
+            player.setGoals(player.getGoals() + weight);
+            player.setDribbling(player.getDribbling() + weight*2);
+            goals += weight;
+        }
+        if(value == 13){
+            std::cout<<"Your player made "<<weight*5<<" successful tackles!"<<std::endl;
+            player.setDefending(player.getDefending() + weight*2);
+        }
+        if(value == 14){
+            std::cout<<"Your player won "<<weight*5<<" duels!"<<std::endl;
+            player.setPhysical(player.getPhysical() + weight*2);
+        }
+        if(value == 8){
+            std::cout<<"Your player missed "<<weight<<" games due to suspensions! This will surely affect his stats!"<<std::endl;
+            player.setShooting(player.getShooting() - weight/2);
+            player.setPassing(player.getPassing() - weight/2);
+            player.setPace(player.getPace() - weight/2);
+            player.setDribbling(player.getDribbling() - weight/2);
+            player.setDefending(player.getDefending() - weight/2);
+            player.setPhysical(player.getPhysical() - weight/2);
+        }
+        if(value == 7){
+            std::cout<<"Your player missed "<<weight*3<<" games due to injury! This will surely affect his stats!"<<std::endl;
+            player.setShooting(player.getShooting() - weight);
+            player.setPassing(player.getPassing() - weight);
+            player.setPace(player.getPace() - weight);
+            player.setDribbling(player.getDribbling() - weight);
+            player.setDefending(player.getDefending() - weight);
+            player.setPhysical(player.getPhysical() - weight);
+        }
+        return std::make_tuple(goals, assists);
+    }
+
+
+    virtual void printAsciiArt() const = 0;
+
+
+};
+
+
+
+class Spades : public Card{
+public:
+    explicit Spades(const int value) : Card(value, "spades") {}
+    ~Spades() = default;
+
+    void printAsciiArt() const override {
+        if(getValue() == 10){
+            std::cout<<" ____ \n|" + changeValue() + "  |\n| /\\ |\n|(__)|\n| /" + changeValue() + "|\n";
+        } else{
+            std::cout<<" ____ \n|" + changeValue() + "   |\n| /\\ |\n|(__)|\n| /\\" + changeValue() + "|\n";
+        }
+    }
+
+
+};
+
+class Hearts : public Card{
+public:
+    explicit Hearts(const int value) : Card(value, "hearts") {}
+    ~Hearts() = default;
+
+    void printAsciiArt() const override {
+        if(getValue() == 10){
+            std::cout<<" ____ \n|" + changeValue() + "  |\n|(\\/)|\n| \\/ |\n|  " + changeValue() + "|\n";
+        } else{
+            std::cout<<" ____ \n|" + changeValue() + "   |\n|(\\/)|\n| \\/ |\n|   " + changeValue() + "|\n";
+        }
+    }
+};
+
+class Diamonds : public Card{
+public:
+    explicit Diamonds(const int value) : Card(value, "diamonds") {}
+    ~Diamonds() = default;
+
+    void printAsciiArt() const override {
+        if(getValue() == 10){
+            std::cout<<" ____ \n|"+ changeValue()+"  |\n| /\\ |\n| \\/ |\n|  "   + changeValue() + "|\n";
+        } else{
+            std::cout<<" ____ \n|"+ changeValue()+"   |\n| /\\ |\n| \\/ |\n|   "   + changeValue() + "|\n";
+        }
+    }
+};
+class Clubs : public Card{
+public:
+    explicit Clubs(const int value) : Card(value, "clubs") {}
+    ~Clubs() = default;
+
+    void printAsciiArt() const override {
+        if(getValue() == 10){
+            std::cout<<" ____ \n|" + changeValue() + "  |\n| &  |\n|&|& |\n|  " + changeValue() + "|\n";
+        } else{
+            std::cout<<" ____ \n|" + changeValue() + "   |\n| &  |\n|&|& |\n|   " + changeValue() + "|\n";
+        }
+    }
+};
+
+class CardGame{
+public:
+
+
+    static std::vector<std::shared_ptr<Card>> initializeDeck() {
+        std::vector<std::shared_ptr<Card>> deck;
+        for (int i = 7; i <= 14; i++) {
+            deck.push_back(std::make_shared<Clubs>(i));
+            deck.push_back(std::make_shared<Hearts>(i));
+            deck.push_back(std::make_shared<Spades>(i));
+            deck.push_back(std::make_shared<Diamonds>(i));
+        }
+        return deck;
+    }
+
+
+    static void shuffleDeck(std::vector<std::shared_ptr<Card>>& deck) {
+        std::shuffle(deck.begin(), deck.end(), std::mt19937(std::random_device()()));
+    }
+
+//    static void printCard(const std::shared_ptr<Card>& card) {
+//        card->printAsciiArt();
+//    }
+
+
+
+    static std::vector<std::shared_ptr<Card>> extractCards(){
+        std::vector<std::shared_ptr<Card>> playerDeck;
+        std::vector<std::shared_ptr<Card>> deck = initializeDeck();
+        shuffleDeck(deck);
+        int choice;
+        for(int i = 0; i < 5; i++){
+            std::cout<<"Choose a card from the deck! (Number from 0 to 31)"<<std::endl;
+            std::cin>>choice;
+            while(choice < 0 || choice >(int) deck.size()){
+                std::cerr<<"Invalid choice!"<<std::endl;
+                std::cin>>choice;
+            }
+            playerDeck.push_back(deck[choice]);
+            deck[choice]->printAsciiArt();
+            shuffleDeck(deck);
+        }
+        return playerDeck;
+    }
+
+    static void training(Player& player, std::vector<std::shared_ptr<Card>>& playerDeck){
+        for(const auto& card : playerDeck) {
+            if(auto clubsCard = dynamic_cast<Clubs*>(card.get())) {
+
+                clubsCard->events(player,1);
+
+            } else if(auto spadesCard = dynamic_cast<Spades*>(card.get())) {
+
+                spadesCard->events(player,2);
+
+            } else if(auto diamondsCard = dynamic_cast<Diamonds*>(card.get())) {
+
+                diamondsCard->events(player,3);
+
+            } else if(auto heartsCard = dynamic_cast<Hearts*>(card.get())) {
+
+                heartsCard->events(player,4);
+
+            }
+        }
+    }
+
+};
+
+
 class Game{
 
 public:
@@ -327,10 +612,24 @@ public:
         std::cin >> fName;
         std::cout << "What is your player last name?" << std::endl;
         std::cin >> lName;
-        std::cout << "What is your player position?" << std::endl;
-        std::cout << "You can choose from these positions:" << std::endl;
-        std::cout << "RB, LB, CB, CDM, CM, CAM, RW, LW, ST" << std::endl;
-        std::cin >> pos;
+
+        std::set<std::string> validPositions = {"RB", "LB", "CB", "CDM", "CM", "CAM", "RW", "LW", "ST"};
+
+        bool validPosition = false;
+        do {
+            std::cout << "What is your player position?" << std::endl;
+            std::cout << "You can choose from these positions:" << std::endl;
+            std::cout << "RB, LB, CB, CDM, CM, CAM, RW, LW, ST" << std::endl;
+            std::cin >> pos;
+
+            std::transform(pos.begin(), pos.end(), pos.begin(), ::toupper);
+
+            if (validPositions.find(pos) != validPositions.end()) {
+                validPosition = true;
+            } else {
+                std::cerr << "Invalid position! Please choose from the provided options." << std::endl;
+            }
+        } while (!validPosition);
 
         int teamChoice;
         do {
@@ -418,6 +717,100 @@ public:
         return std::make_tuple(pl2off,pl2out1,pl2out2);
     }
 
+    static bool printStandings(PlayOffSuperliga& ploff,PlayOutSuperliga& plout,
+                               PlayOffLiga2& pl2off, PlayOut1Liga2& pl2out1, PlayOut2Liga2& pl2out2){
+        std::string choice;
+        std::cout<<std::endl;
+        std::cout<<"Press 1 to display the Superliga PlayOff Table"<<std::endl;
+        std::cout<<"Press 2 to display the Superliga PlayOut Table"<<std::endl;
+        std::cout<<"Press 3 to display the Liga2 PlayOff Table"<<std::endl;
+        std::cout<<"Press 4 to display the Liga2 PlayOut Table Series 1"<<std::endl;
+        std::cout<<"Press 5 to display the Liga2 PlayOut Table Series 2"<<std::endl;
+        std::cout << "Press 0 to stop" << std::endl;
+
+        std::cin>>choice;
+        if(choice == "1"){
+            std::cout<<"Superliga PlayOff Table 2023/24"<<std::endl;
+            std::cout<<ploff<<std::endl;
+        }
+        else if(choice == "2"){
+            std::cout<<"Superliga PlayOut Table 2023/24"<<std::endl;
+            std::cout<<plout<<std::endl;
+        }
+        else if(choice == "3"){
+            std::cout<<"Liga2 PlayOff Table 2023/24"<<std::endl;
+            std::cout<<pl2off<<std::endl;
+        }
+        else if(choice == "4"){
+            std::cout<<"Liga2 PlayOut Table Series 1 2023/24"<<std::endl;
+            std::cout<<pl2out1<<std::endl;
+        }
+        else if(choice == "5"){
+            std::cout<<"Liga2 PlayOut Table Series 2 2023/24"<<std::endl;
+            std::cout<<pl2out2<<std::endl;
+        }else if (choice == "0") {
+            return false; // Oprirea afisarii
+        } else {
+            std::cerr << "Invalid choice! Please choose a valid option." << std::endl;
+        }
+        return true;
+
+    }
+
+    static void transferOffer(Superliga& superliga, Liga2& liga2, Player& player){
+        std::vector<Team> teams = {};
+        teams.insert(teams.end(), superliga.getTeams().begin(), superliga.getTeams().end());
+        teams.insert(teams.end(),liga2.getTeams().begin(),liga2.getTeams().end());
+
+        int startIndex;
+        for(int i = 0; i < (int) teams.size(); i++){
+            if(teams[i].getRating() <= player.getOverallRating()){
+                startIndex = i;
+                break;
+            }
+        }
+
+        std::vector<Team> randomTeams = generateRandomTeams(teams,startIndex, startIndex+4);
+
+        std::cout<<std::endl;
+        std::cout << "Choose one of the following teams to transfer to:" << std::endl;
+        for (size_t i = 0; i < randomTeams.size(); ++i) {
+            std::cout << i + 1 << ". " << randomTeams[i].getName() << " " << randomTeams[i].getCity() << " (" << randomTeams[i].getRating() << ")" << std::endl;
+        }
+
+        int choice;
+        std::cout << "Enter your choice (1-3): ";
+        std::cin >> choice;
+
+        if (choice >= 1 && choice <= 3) {
+            Team chosenTeam = randomTeams[choice - 1];
+            std::cout << "You have chosen to transfer to: " << chosenTeam.getName() << " " << chosenTeam.getCity() << std::endl;
+
+            player.setTeam(chosenTeam);
+        } else {
+            std::cerr << "Invalid choice! Transfer canceled." << std::endl;
+        }
+    }
+
+    static void simSeason(Superliga& superliga, Liga2& liga2){
+        superliga.calculateStandings();
+        liga2.calculateStandings();
+        auto [ploff, plout] = Game::superligaStandingCalculator(superliga);
+        auto [pl2off, pl2out1, pl2out2] = Game::liga2StandingCalculator(liga2);
+        bool continueDisplay = true;
+        while (continueDisplay) {
+            continueDisplay = Game::printStandings(ploff, plout, pl2off, pl2out1, pl2out2);
+        }
+    }
+
+//    static void simulateSeasons(Superliga& superliga, Liga2& liga2){
+//        for(int i = 0; i< 15; i++){
+//
+//        }
+//    }
+
+
+
 };
 
 int main(){
@@ -469,43 +862,25 @@ int main(){
     // se aleg 3 echile dintre cele mai slabe, iar jucatorul selecteaza una din ele
     std::cout<< player;
 
-    std::cout<<std::endl;
-    std::cout<<"sezonul 1"<<std::endl;
 
-    auto [ploff, plout] = Game::superligaStandingCalculator(superliga);
-    std::cout<<"Liga1"<<std::endl;
-
-    std::cout<<std::endl;
-    std::cout<<ploff<<std::endl<<std::endl;
-    std::cout<<plout<<std::endl<<std::endl;
-
-    auto [pl2off, pl2out1, pl2out2] = Game::liga2StandingCalculator(liga2);
-    std::cout<<"Liga2"<<std::endl;
-
-    std::cout<<pl2off<<std::endl<<std::endl;
-    std::cout<<pl2out1<<std::endl<<std::endl;
-    std::cout<<pl2out2<<std::endl<<std::endl;
-
-    Liga2::promotion(superliga, liga2);
-
-    std::cout<<"sezonul 2"<<std::endl;
-
-    auto [ploffx, ploutx] = Game::superligaStandingCalculator(superliga);
-    std::cout<<"Liga1"<<std::endl;
-
-    std::cout<<std::endl;
-    std::cout<<ploffx<<std::endl<<std::endl;
-    std::cout<<ploutx<<std::endl<<std::endl;
-
-    auto [pl2offx, pl2out1x, pl2out2x] = Game::liga2StandingCalculator(liga2);
-    std::cout<<"Liga2"<<std::endl;
-
-    std::cout<<pl2offx<<std::endl<<std::endl;
-    std::cout<<pl2out1x<<std::endl<<std::endl;
-    std::cout<<pl2out2x<<std::endl<<std::endl;
+    Game::simSeason(superliga, liga2);
 
 
     std::cout<<Game::overallRatingCalculator(player);
+
+    std::vector<std::shared_ptr<Card>> playerDeck = CardGame::extractCards();
+    CardGame::training(player,playerDeck);
+
+    Game::transferOffer(superliga, liga2, player);
+
+    std::cout<<std::endl;
+    std::cout<<player;
+    std::cout<<std::endl;
+
+
+
+    Liga2::promotion(superliga, liga2);
+    Game::simSeason(superliga, liga2);
 
     return 0;
 }
